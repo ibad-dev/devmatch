@@ -53,9 +53,20 @@ export default function VerifyEmailPage() {
         <div className="space-y-4">
           <Input
             type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
             placeholder="Enter verification code"
             value={otp}
-            onChange={(e) => setOtp(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (/^\d*$/.test(value)) {
+                // Only allow numeric input
+                setOtp(value);
+                setError(""); // Clear error when input is valid
+              } else {
+                setError("OTP must contain only numbers");
+              }
+            }}
             className="bg-[#222] border-[#333] text-white placeholder-gray-500"
           />
 
@@ -63,9 +74,9 @@ export default function VerifyEmailPage() {
             <div className="text-red-400 text-sm text-center">{error}</div>
           )}
 
-          <Button 
-            onClick={handleVerify} 
-            disabled={loading} 
+          <Button
+            onClick={handleVerify}
+            disabled={loading}
             className="w-full bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] hover:from-[#1D4ED8] hover:to-[#2563EB] hover:shadow-[0_5px_30px_-5px_rgba(37,99,235,0.3)] transition-all"
           >
             {loading ? (

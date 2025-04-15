@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -32,47 +32,70 @@ export default function SignInPage() {
   const {
     handleSubmit,
     register,
-    formState: { errors, isSubmitting },
+    trigger,
+    formState: { errors, isSubmitting, isValid },
   } = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
     mode: "onChange",
   });
 
-  const handleEmailLogin = async (data: SignInFormData) => {
-    setError(null);
-    setSuccess(false);
+  const handleEmailLogin = useCallback(
+    async (data: SignInFormData) => {
+      setError(null);
+      setSuccess(false);
 
-    const result = await signIn("credentials", {
-      redirect: false,
-      email: data.email,
-      password: data.password,
-    });
+      const result = await signIn("credentials", {
+        redirect: false,
+        email: data.email,
+        password: data.password,
+      });
 
-    if (result?.error) {
-      setError(
-        result.error === "CredentialsSignin"
-          ? "Invalid email or password"
-          : result.error
-      );
-    } else {
-      setSuccess(true);
-      setTimeout(() => router.push("/dashboard"), 1000);
-    }
-  };
+      if (result?.error) {
+        setError(
+          result.error === "CredentialsSignin"
+            ? "Invalid email or password"
+            : result.error
+        );
+      } else {
+        setSuccess(true);
+        router.push("/dashboard");
+      }
+    },
+    [router]
+  );
 
-  const handleOAuth = async (provider: "google" | "github") => {
+  const handleOAuth = useCallback(async (provider: "google" | "github") => {
     setLoadingOAuth(provider);
     setError(null);
     try {
-      await signIn(provider, { callbackUrl: "/dashboard" });
+      const result = await signIn(provider, {
+        callbackUrl: "/dashboard",
+        redirect: false,
+      });
+
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+
+      if (result?.url) {
+        window.location.href = result.url;
+      } else {
+        throw new Error("No redirect URL provided");
+      }
     } catch (err) {
       setError(
         `${provider.charAt(0).toUpperCase() + provider.slice(1)} sign-in failed`
       );
-    } finally {
       setLoadingOAuth(null);
     }
-  };
+  }, []);
+
+  // Clean up OAuth loading state on unmount
+  useEffect(() => {
+    return () => {
+      setLoadingOAuth(null);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#111111] p-4">
@@ -121,9 +144,18 @@ export default function SignInPage() {
               id="email"
               type="email"
               autoComplete="email"
-              {...register("email")}
+              autoFocus
+              {...register("email", {
+                onBlur: () => trigger("email"),
+                onChange: () => {
+                  setError(null);
+                  trigger("email");
+                },
+              })}
               className="bg-[#222] border-[#333] text-white placeholder-gray-500 focus-visible:ring-2 focus-visible:ring-[#2563EB]"
               aria-invalid={!!errors.email}
+              disabled={isSubmitting}
+              onFocus={(e) => isSubmitting && e.target.blur()}
             />
             {errors.email && (
               <span className="text-red-400 text-sm">
@@ -144,15 +176,24 @@ export default function SignInPage() {
                 id="password"
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
-                {...register("password")}
+                {...register("password", {
+                  onBlur: () => trigger("password"),
+                  onChange: () => {
+                    setError(null);
+                    trigger("password");
+                  },
+                })}
                 className="bg-[#222] border-[#333] text-white placeholder-gray-500 focus-visible:ring-2 focus-visible:ring-[#2563EB] pr-12"
                 aria-invalid={!!errors.password}
+                disabled={isSubmitting}
+                onFocus={(e) => isSubmitting && e.target.blur()}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm hover:text-gray-300 transition-colors"
                 aria-label={showPassword ? "Hide password" : "Show password"}
+                disabled={isSubmitting}
               >
                 {showPassword ? "Hide" : "Show"}
               </button>
@@ -174,7 +215,7 @@ export default function SignInPage() {
 
           <Button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isValid}
             className="w-full bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] hover:from-[#1D4ED8] hover:to-[#2563EB] hover:shadow-[0_5px_30px_-5px_rgba(37,99,235,0.3)] transition-all"
           >
             {isSubmitting ? (
@@ -246,7 +287,6 @@ export default function SignInPage() {
     </div>
   );
 }
-
 // Keep the same icon components
 const GoogleIcon = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24">

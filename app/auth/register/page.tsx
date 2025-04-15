@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -33,8 +33,6 @@ type FormValues = z.infer<typeof formSchema>;
 export default function RegisterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
   const [loadingOAuth, setLoadingOAuth] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -48,14 +46,35 @@ export default function RegisterPage() {
     mode: "onChange",
   });
 
-  const debouncedValidate = useCallback(
-    (field: keyof FormValues) => debounce(() => trigger(field), 500)(),
+  // Create debounced validation functions for onChange
+  const debouncedValidateName = useCallback(
+    debounce(() => trigger("name"), 500),
+    [trigger]
+  );
+  const debouncedValidateEmail = useCallback(
+    debounce(() => trigger("email"), 500),
+    [trigger]
+  );
+  const debouncedValidatePassword = useCallback(
+    debounce(() => trigger("password"), 500),
     [trigger]
   );
 
+  // Clean up debounced timers on unmount
+  useEffect(() => {
+    return () => {
+      debouncedValidateName.cancel();
+      debouncedValidateEmail.cancel();
+      debouncedValidatePassword.cancel();
+    };
+  }, [
+    debouncedValidateName,
+    debouncedValidateEmail,
+    debouncedValidatePassword,
+  ]);
+
   const onSubmit = async (data: FormValues) => {
     try {
-      setError("");
       const res = await fetch("/api/auth/send-verification", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -68,16 +87,16 @@ export default function RegisterPage() {
       // Redirect to verification page with email as query param
       router.push(`/auth/verify-email?email=${encodeURIComponent(data.email)}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Verification failed");
+      console.error("Registration error:", err);
+      // Consider adding a toast notification here
     }
   };
 
-  const handleOAuth = async (provider: 'google' | 'github') => {
+  const handleOAuth = async (provider: "google" | "github") => {
     setLoadingOAuth(provider);
-    setError('');
     try {
       const result = await signIn(provider, {
-        callbackUrl: '/dashboard',
+        callbackUrl: "/dashboard",
         redirect: false,
       });
 
@@ -86,20 +105,16 @@ export default function RegisterPage() {
       }
 
       if (result?.url) {
-        // Redirect without clearing the loading state
         window.location.href = result.url;
-        // No return or state updates after this to keep spinner active
       } else {
-        throw new Error('No redirect URL provided');
+        throw new Error("No redirect URL provided");
       }
     } catch (err) {
-      setError(
-        `${provider.charAt(0).toUpperCase() + provider.slice(1)} sign-up failed`
-      );
+      console.error("OAuth error:", err);
       setLoadingOAuth(null);
+      // Consider adding a toast notification here
     }
   };
-
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#111111] p-4">
@@ -119,18 +134,6 @@ export default function RegisterPage() {
           Register for DevMatch
         </h1>
 
-        {/* Status Messages */}
-        {success && (
-          <div className="animate-fade-in bg-green-500/20 text-green-400 p-3 rounded-md mb-6 text-center">
-            Registration successful! Redirecting to login...
-          </div>
-        )}
-        {error && (
-          <div className="animate-fade-in bg-red-500/20 text-red-400 p-3 rounded-md mb-6 text-center">
-            {error}
-          </div>
-        )}
-
         {/* Form */}
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -143,9 +146,14 @@ export default function RegisterPage() {
             </label>
             <Input
               id="name"
-              {...register("name", { onBlur: () => debouncedValidate("name") })}
+              {...register("name", {
+                onChange: () => debouncedValidateName(),
+                onBlur: () => trigger("name"),
+              })}
               className="bg-[#222] border-[#333] text-white placeholder-gray-500 focus-visible:ring-2 focus-visible:ring-[#2563EB]"
               aria-invalid={!!errors.name}
+              disabled={isSubmitting}
+              onFocus={(e) => isSubmitting && e.target.blur()}
             />
             {errors.name && (
               <span className="text-red-400 text-sm">
@@ -164,11 +172,18 @@ export default function RegisterPage() {
             <Input
               id="email"
               type="email"
+              autoComplete="email"
+              autoFocus
               {...register("email", {
-                onBlur: () => debouncedValidate("email"),
+                onBlur: () => trigger("email"),
+                onChange: () => {
+                  trigger("email");
+                },
               })}
               className="bg-[#222] border-[#333] text-white placeholder-gray-500 focus-visible:ring-2 focus-visible:ring-[#2563EB]"
               aria-invalid={!!errors.email}
+              disabled={isSubmitting}
+              onFocus={(e) => isSubmitting && e.target.blur()}
             />
             {errors.email && (
               <span className="text-red-400 text-sm">
@@ -188,17 +203,24 @@ export default function RegisterPage() {
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
                 {...register("password", {
-                  onBlur: () => debouncedValidate("password"),
+                  onBlur: () => trigger("password"),
+                  onChange: () => {
+                    trigger("password");
+                  },
                 })}
                 className="bg-[#222] border-[#333] text-white placeholder-gray-500 focus-visible:ring-2 focus-visible:ring-[#2563EB] pr-12"
                 aria-invalid={!!errors.password}
+                disabled={isSubmitting}
+                onFocus={(e) => isSubmitting && e.target.blur()}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm hover:text-gray-300 transition-colors"
                 aria-label={showPassword ? "Hide password" : "Show password"}
+                disabled={isSubmitting}
               >
                 {showPassword ? "Hide" : "Show"}
               </button>
@@ -216,8 +238,8 @@ export default function RegisterPage() {
 
           <Button
             type="submit"
-            disabled={!isValid || isSubmitting}
-            className="w-full bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] hover:from-[#1D4ED8] hover:to-[#2563EB] hover:shadow-[0_5px_30px_-5px_rgba(37,99,235,0.3)] transition-all"
+            disabled={isSubmitting || !isValid}
+            className="w-full bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] hover:from-[#1D4ED8] hover:to-[#2563EB] hover:shadow-[0_5px_30px_-5px_rgba(37,99,235,0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
               <div className="flex items-center gap-2">
@@ -288,7 +310,6 @@ export default function RegisterPage() {
     </div>
   );
 }
-
 const GoogleIcon = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24">
     <path
