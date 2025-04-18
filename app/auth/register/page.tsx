@@ -96,7 +96,7 @@ export default function RegisterPage() {
     setLoadingOAuth(provider);
     try {
       const result = await signIn(provider, {
-        callbackUrl: "/dashboard",
+        callbackUrl: "/profile",
         redirect: false,
       });
 

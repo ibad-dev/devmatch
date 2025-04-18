@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { TwitterLogo, GithubLogo } from "@/components/Icons";
 
 export default function Home() {
   const router = useRouter();
@@ -183,14 +182,21 @@ export default function Home() {
             </div>
 
             {/* Social Media Icons */}
-            {/* <div className="flex gap-6">
+            <div className="flex gap-6">
               <a
                 href="https://twitter.com"
                 target="_blank"
                 aria-label="Twitter"
                 rel="noopener noreferrer"
               >
-                <TwitterLogo className="w-6 h-6 text-gray-300 hover:text-gray-400 transition duration-300" />
+                <Image
+                  src="/logos/twitter_logo.svg" // Replace with your actual image path
+                  alt="Developers discussing a project"
+                  width={600}
+                  height={400}
+                  className="w-6 h-6 text-gray-300 hover:text-gray-400 transition duration-300 rounded-xl"
+                  priority
+                />
               </a>
               <a
                 href="https://github.com"
@@ -198,10 +204,16 @@ export default function Home() {
                 aria-label="GitHub"
                 rel="noopener noreferrer"
               >
-                <GithubLogo className="w-6 h-6 text-gray-300 hover:text-gray-400 transition duration-300" />
+                <Image
+                  src="/logos/github_logo.svg" // Replace with your actual image path
+                  alt="Developers discussing a project"
+                  width={600}
+                  height={400}
+                  className="w-6 h-6 text-gray-300 hover:text-gray-400 transition duration-300 rounded-xl"
+                  priority
+                />
               </a>
             </div>
-             */}
           </div>
 
           {/* Copyright Section */}

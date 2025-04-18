@@ -58,7 +58,7 @@ export default function SignInPage() {
         );
       } else {
         setSuccess(true);
-        router.push("/dashboard");
+        router.push("/profile");
       }
     },
     [router]
@@ -69,7 +69,7 @@ export default function SignInPage() {
     setError(null);
     try {
       const result = await signIn(provider, {
-        callbackUrl: "/dashboard",
+        callbackUrl: "/profile",
         redirect: false,
       });
 
