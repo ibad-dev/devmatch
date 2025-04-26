@@ -1,52 +1,57 @@
-import cloudinary from "cloudinary";
-import { Readable } from "stream";
+import { v2 as cloudinary } from "cloudinary";
 
-// Set up Cloudinary configuration
-if (
-  !process.env.CLOUDINARY_CLOUD_NAME ||
-  !process.env.CLOUDINARY_API_KEY ||
-  !process.env.CLOUDINARY_API_SECRET
-) {
-  throw new Error("Missing Cloudinary configuration");
-}
-cloudinary.v2.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+// ✅ Configure Cloudinary with your env vars
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
+  api_key: process.env.CLOUDINARY_API_KEY!,
+  api_secret: process.env.CLOUDINARY_API_SECRET!,
 });
 
-interface CloudinaryResult {
-  secure_url: string;
-  public_id: string;
-  // ... other Cloudinary response fields
+// ✅ Upload function
+export async function uploadToCloudinary(buffer: Buffer, folder: string) {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader
+      .upload_stream(
+        {
+          resource_type: "auto", // smart detect
+          folder,
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      )
+      .end(buffer);
+  });
 }
 
-// Helper function to upload file to Cloudinary
-export const uploadToCloudinary = async (
-  fileBuffer: Buffer,
-  folder: string
-): Promise<CloudinaryResult> => {
-  return new Promise((resolve, reject) => {
-    const stream = cloudinary.v2.uploader.upload_stream(
-      {
-        folder, // Folder name in Cloudinary
-        resource_type: "auto", // Automatically detect file type (image, video, etc.)
-      },
-      (error, result) => {
-        if (error) {
-          reject(new Error(`Cloudinary upload failed: ${error.message}`));
-        } else if (result) {
-          resolve(result);
-        } else {
-          reject(new Error("Cloudinary returned undefined result"));
-        }
-      }
+// ✅ Delete function with proper resource type handling
+export async function deleteFromCloudinary(
+  publicId: string,
+  resourceType: "image" | "video" | "raw" = "image"
+) {
+  try {
+    console.log(
+      `Attempting to delete Cloudinary resource with public ID: ${publicId} (type: ${resourceType})`
     );
-
-    // Convert buffer to stream and pipe it to Cloudinary upload
-    const bufferStream = new Readable();
-    bufferStream.push(fileBuffer);
-    bufferStream.push(null); // End of stream
-    bufferStream.pipe(stream); // Pipe the buffer stream to Cloudinary
-  });
-};
+    const result = await cloudinary.uploader.destroy(publicId, {
+      resource_type: resourceType,
+    });
+    console.log("Cloudinary deletion result:", result);
+    if (result.result !== "ok") {
+      console.warn(
+        `Cloudinary deletion returned unexpected result: ${result.result}`
+      );
+    }
+    return result;
+  } catch (error) {
+    console.error("Error deleting from Cloudinary:", {
+      message: error instanceof Error ? error.message : "Unknown error",
+      publicId: publicId,
+      resourceType: resourceType,
+      stack: error instanceof Error ? error.stack : undefined,
+      errorObject: error,
+    });
+    throw error; // Re-throw the error after logging
+  }
+}
