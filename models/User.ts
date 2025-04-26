@@ -45,7 +45,7 @@ const UserSchema = new Schema<IUser>(
       unique: true,
       match: [/\S+@\S+\.\S+/, "is invalid"],
     },
-    password: { type: String },
+    password: { type: String , select:false},
     profileImage: { type: String },
     isVerified: { type: Boolean, default: false },
     verificationOTP: { type: String },

@@ -3,6 +3,7 @@ import mongoose, { Schema, model, models, Document } from "mongoose";
 export interface IProject extends Document {
   title: string;
   description: string;
+  owner: mongoose.Types.ObjectId;
   tags?: string[];
   techStack?: string[];
 
@@ -23,9 +24,25 @@ export interface IProject extends Document {
 
 const ProjectSchema = new Schema<IProject>(
   {
-    title: { type: String, required: true },
-    description: { type: String, required: true },
-
+    title: {
+      type: String,
+      required: true,
+      minlength: 3,
+      maxlength: 100,
+      index: true,
+    },
+    description: {
+      type: String,
+      required: true,
+      minlength: 10,
+      maxlength: 2000,
+    },
+    owner: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
     tags: [{ type: String }],
     techStack: [{ type: String }],
 
