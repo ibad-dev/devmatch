@@ -17,10 +17,10 @@ export interface IUser extends Document {
   resetToken?: string; // New field for password reset token
   resetTokenExpiry?: Date; // New field for password reset token expiration
 
-  social?: {
+  socials?: {
     github?: string;
     linkedin?: string;
-    twitter?: string;
+    X?: string;
     portfolio?: string;
   };
 
@@ -61,10 +61,10 @@ const UserSchema = new Schema<IUser>(
     skills: [{ type: String, default: [] }],
     location: { type: String },
 
-    social: {
+    socials: {
       github: { type: String },
       linkedin: { type: String },
-      twitter: { type: String },
+      X: { type: String },
       portfolio: { type: String },
     },
 
