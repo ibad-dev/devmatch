@@ -16,7 +16,11 @@ export interface IUser extends Document {
   verificationExpiry?: Date;
   resetToken?: string; // New field for password reset token
   resetTokenExpiry?: Date; // New field for password reset token expiration
-
+  role?: {
+    type: string;
+    enum: ["user", "admin"];
+    default: "user";
+  };
   socials?: {
     github?: string;
     linkedin?: string;
@@ -37,7 +41,7 @@ export interface IUser extends Document {
 
 const UserSchema = new Schema<IUser>(
   {
-    name: { type: String, index: true, required: true },
+    name: { type: String, required: true },
     email: {
       type: String,
       required: true,
@@ -78,6 +82,11 @@ const UserSchema = new Schema<IUser>(
     // New fields for password reset
     resetToken: { type: String },
     resetTokenExpiry: { type: Date },
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+    },
   },
   {
     timestamps: true, // auto adds createdAt and updatedAt
@@ -108,7 +117,7 @@ UserSchema.methods.generateVerificationOTP = function (): string {
 };
 
 UserSchema.methods.verifyOTP = function (otp: string): boolean {
-  if (this.verificationOTP === otp && this.verificationExpiry > new Date()) {
+  if (this.verificationOTP === otp && new  Date(this.verificationExpiry) > new Date()) {
     this.isVerified = true;
     this.verificationOTP = undefined;
     this.verificationExpiry = undefined;
