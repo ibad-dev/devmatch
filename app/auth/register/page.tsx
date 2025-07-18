@@ -26,6 +26,8 @@ const formSchema = z.object({
     .regex(/[a-z]/, "At least one lowercase letter (a-z)")
     .regex(/[0-9]/, "At least one number (0-9)")
     .regex(/[^A-Za-z0-9]/, "At least one special character (!@#$%^&*)"),
+    username: z.string().min(3, "Username must be at least 3 characters")
+    .max(25, "Username must be less than 25 characters"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -59,6 +61,10 @@ export default function RegisterPage() {
     debounce(() => trigger("password"), 500),
     [trigger]
   );
+  const debouncedValidateUsername = useCallback(
+    debounce(() => trigger("username"), 500),
+    [trigger]
+  );
 
   // Clean up debounced timers on unmount
   useEffect(() => {
@@ -66,11 +72,13 @@ export default function RegisterPage() {
       debouncedValidateName.cancel();
       debouncedValidateEmail.cancel();
       debouncedValidatePassword.cancel();
+      debouncedValidateUsername.cancel();
     };
   }, [
     debouncedValidateName,
     debouncedValidateEmail,
     debouncedValidatePassword,
+    debouncedValidateUsername,
   ]);
 
   const onSubmit = async (data: FormValues) => {
@@ -142,7 +150,7 @@ export default function RegisterPage() {
         >
           <div className="space-y-2">
             <label htmlFor="name" className="text-sm font-medium text-gray-300">
-              Name
+           Full Name
             </label>
             <Input
               id="name"
@@ -158,6 +166,32 @@ export default function RegisterPage() {
             {errors.name && (
               <span className="text-red-400 text-sm">
                 {errors.name.message}
+              </span>
+            )}
+          </div>
+          <div className="space-y-2">
+            <label
+              htmlFor="username"
+              className="text-sm font-medium text-gray-300"
+            >
+              Username
+            </label>
+            <Input
+              id="username"
+              {...register("username", {
+                onBlur: () => trigger("username"),
+                onChange: () => {
+                  trigger("username");
+                },
+              })}
+              className="bg-[#222] border-[#333] text-white placeholder-gray-500 focus-visible:ring-2 focus-visible:ring-[#2563EB]"
+              aria-invalid={!!errors.username}
+              disabled={isSubmitting}
+              onFocus={(e) => isSubmitting && e.target.blur()}
+            />
+            {errors.username && (
+                <span className="text-red-400 text-sm">
+                {errors.username.message}
               </span>
             )}
           </div>
@@ -236,6 +270,7 @@ export default function RegisterPage() {
             )}
           </div>
 
+         
           <Button
             type="submit"
             disabled={isSubmitting || !isValid}
