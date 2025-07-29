@@ -48,28 +48,51 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, account }) {
-      await dbConnect();
-      const existingUser = await User.findOne({ email: user.email });
-
-      if (existingUser) {
-        if (account?.provider !== "credentials" && existingUser.password) {
-          existingUser.profileImage = user.image || existingUser.profileImage;
-          existingUser.isVerified = true;
-          await existingUser.save();
+      try {
+        // Skip for Credentials, as authorize already validated
+        if (account?.provider === "credentials") {
+          return true;
         }
-        return true;
-      }
 
-      if (account?.provider !== "credentials") {
+        await dbConnect();
+        const existingUser = await User.findOne({ email: user.email });
+
+        if (existingUser) {
+          // Update profile for OAuth logins if profileImage is missing or changed
+          if (account?.provider !== "credentials") {
+            let shouldUpdate = false;
+            if (
+              !existingUser.profileImage ||
+              existingUser.profileImage !== user.image
+            ) {
+              existingUser.profileImage =
+                user.image || existingUser.profileImage;
+              shouldUpdate = true;
+            }
+            if (!existingUser.isVerified) {
+              existingUser.isVerified = true;
+              shouldUpdate = true;
+            }
+            if (shouldUpdate) {
+              await existingUser.save();
+            }
+          }
+          return true;
+        }
+
+        // Create new user for OAuth logins
         const newUser = new User({
-          name: user.name,
+          name: user.name || "Unknown",
           email: user.email,
-          profileImage: user.image,
+          profileImage: user.image || null,
           isVerified: true,
         });
         await newUser.save();
+        return true;
+      } catch (error) {
+        console.error("Error in signIn callback:", error);
+        return false; // Reject sign-in on error
       }
-      return true;
     },
     async jwt({ token, user }) {
       if (user) {

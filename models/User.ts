@@ -24,7 +24,7 @@ export interface IUser extends Document {
   socials?: {
     github?: string;
     linkedin?: string;
-    X?: string;
+    twitter?: string;
     portfolio?: string;
   };
 
@@ -68,7 +68,7 @@ const UserSchema = new Schema<IUser>(
     socials: {
       github: { type: String },
       linkedin: { type: String },
-      X: { type: String },
+      twitter: { type: String },
       portfolio: { type: String },
     },
 
