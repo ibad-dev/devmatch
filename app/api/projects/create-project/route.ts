@@ -16,6 +16,7 @@ const projectSchema = z.object({
   techStack: z.array(z.string()).optional(),
   githubUrl: z.string().url().optional(),
   liveUrl: z.string().url().optional(),
+  isCollabrating: z.boolean().optional(),
   status: z.enum(["draft", "published"]).optional(),
   media: z
     .object({

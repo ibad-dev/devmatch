@@ -13,7 +13,7 @@ export async function uploadToCloudinary(buffer: Buffer, folder: string) {
     cloudinary.uploader
       .upload_stream(
         {
-          resource_type: "auto", // smart detect
+          resource_type: "auto", 
           folder,
         },
         (error, result) => {

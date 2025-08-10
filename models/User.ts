@@ -145,6 +145,7 @@ UserSchema.methods.validateResetToken = function (token: string): boolean {
   return this.resetToken === hashedToken && this.resetTokenExpiry > new Date();
 };
 
+
 // Add a method to clear reset token after use
 UserSchema.methods.clearResetToken = function (): void {
   this.resetToken = undefined;

@@ -6,10 +6,10 @@ export interface IProject extends Document {
   owner: mongoose.Types.ObjectId;
   tags?: string[];
   techStack?: string[];
-
+  isCollabrating: boolean;
   githubUrl?: string;
   liveUrl?: string;
-
+  collabrators?: mongoose.Types.ObjectId[];
   media?: {
     videoUrl?: string;
     images?: string[]; // URLs of uploaded images
@@ -45,10 +45,10 @@ const ProjectSchema = new Schema<IProject>(
     },
     tags: [{ type: String }],
     techStack: [{ type: String }],
-
+    isCollabrating: { type: Boolean, default: false },
     githubUrl: { type: String },
     liveUrl: { type: String },
-
+    collabrators: [{ type: Schema.Types.ObjectId, ref: "User" }],
     media: {
       videoUrl: { type: String },
       images: [{ type: String }],

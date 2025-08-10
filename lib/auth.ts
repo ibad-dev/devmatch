@@ -115,7 +115,7 @@ export const authOptions: NextAuthOptions = {
       return url.startsWith(baseUrl) ? url : baseUrl;
     },
   },
-  session: {
+  session: {  
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60,
   },
