@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -31,7 +31,12 @@ export default function ResetPasswordPage({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const token = decodeURIComponent(params.token);
+ 
+//   const token = decodeURIComponent(params.token);
+
+const searchParams = useSearchParams();
+
+const token = searchParams.get("token");
 
   if (!token) {
     return (
@@ -75,6 +80,7 @@ export default function ResetPasswordPage({
       setIsSubmitting(true);
 
       try {
+        console.log("___TOKEN___",token)
         const res = await fetch(`/api/auth/reset-password/${token}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },

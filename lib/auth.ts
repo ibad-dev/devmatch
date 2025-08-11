@@ -20,14 +20,14 @@ export const authOptions: NextAuthOptions = {
         }
 
         await dbConnect();
-        const user = await User.findOne({ email: credentials.email });
+        const user = await User.findOne({ email: credentials.email }).select("+password");
         if (!user || !user.password) {
           throw new Error("Invalid credentials");
         }
 
         const isValid = await user.comparePassword(credentials.password);
         if (!isValid) {
-          throw new Error("Invalid credentials");
+          throw new Error("Invalid password");
         }
 
         return { id: user._id.toString(), name: user.name, email: user.email };
