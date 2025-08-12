@@ -1,32 +1,24 @@
 import nodemailer from "nodemailer";
 import { env } from "@/config/env";
 
-// Create reusable transporter object using the default SMTP transport
-const transporter = nodemailer.createTransport({
-  host: env.SMTP_HOST,
-  port: 587,
-  secure: false,
-  auth: {
-    user: env.SMTP_USER,
-    pass: env.SMTP_PASSWORD,
-  },
-  // Connection timeout in ms
-  connectionTimeout: 10000,
-  // Socket timeout in ms
-  socketTimeout: 10000,
-  tls: {
-    rejectUnauthorized: false,
-  },
-});
+let transporter: nodemailer.Transporter | null = null;
 
-// Verify transporter connection configuration
-transporter.verify((error) => {
-  if (error) {
-    console.error("Error verifying SMTP connection:", error);
-  } else {
-    console.log("SMTP connection verified successfully");
-  }
-});
+function getTransporter() {
+  if (transporter) return transporter;
+  transporter = nodemailer.createTransport({
+    host: env.SMTP_HOST,
+    port: 587,
+    secure: false,
+    auth: {
+      user: env.SMTP_USER,
+      pass: env.SMTP_PASSWORD,
+    },
+    connectionTimeout: 10000,
+    socketTimeout: 10000,
+    tls: { rejectUnauthorized: false },
+  });
+  return transporter;
+}
 
 interface SendEmailOptions {
   to: string;
@@ -35,18 +27,14 @@ interface SendEmailOptions {
   text?: string;
 }
 
-export const sendEmail = async ({
-  to,
-  subject,
-  html,
-  text,
-}: SendEmailOptions) => {
+export const sendEmail = async ({ to, subject, html, text }: SendEmailOptions) => {
   try {
-    await transporter.sendMail({
+    const tx = getTransporter();
+    await tx.sendMail({
       from: `"DevMatch" <${env.SENDER_EMAIL}>`,
       to,
       subject,
-      text: text || html.replace(/<[^>]+>/g, ""), // Fallback text version
+      text: text || html.replace(/<[^>]+>/g, ""),
       html,
     });
   } catch (error) {
@@ -67,20 +55,10 @@ export const sendVerificationEmail = async (email: string, otp: string) => {
     </div>
   `;
 
-  await sendEmail({
-    to: email,
-    subject,
-    html,
-  });
+  await sendEmail({ to: email, subject, html });
 };
 
-export async function sendResetPasswordEmail({
-  email,
-  resetUrl,
-}: {
-  email: string;
-  resetUrl: string;
-}) {
+export async function sendResetPasswordEmail({ email, resetUrl }: { email: string; resetUrl: string }) {
   const subject = "Reset your DevMatch password";
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

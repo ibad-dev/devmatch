@@ -76,13 +76,13 @@ import dbConnect from "@/lib/db";
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { token: string } }
+  context: any
 ) {
   try {
     await dbConnect();
 
     // Decode the token to handle special characters
-    const token = decodeURIComponent(params.token);
+    const token = decodeURIComponent((context as { params: { token: string } }).params.token);
     const { password } = await request.json();
 
     if (!token || !password) {

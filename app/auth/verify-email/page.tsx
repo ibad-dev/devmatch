@@ -1,19 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 
-export default function VerifyEmailPage() {
+function VerifyEmailInner() {
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
-  const email = searchParams.get("email");
+  const email = searchParams?.get("email") || "";
 
   const handleVerify = async () => {
     if (!email) return;
@@ -46,9 +46,7 @@ export default function VerifyEmailPage() {
           Verify Your Email
         </h1>
 
-        <p className="text-center mb-6 text-gray-300">
-          We've sent a verification code to {email}
-        </p>
+        <p className="text-center mb-6 text-gray-300">We've sent a verification code to {email}</p>
 
         <div className="space-y-4">
           <Input
@@ -60,9 +58,8 @@ export default function VerifyEmailPage() {
             onChange={(e) => {
               const value = e.target.value;
               if (/^\d*$/.test(value)) {
-                // Only allow numeric input
                 setOtp(value);
-                setError(""); // Clear error when input is valid
+                setError("");
               } else {
                 setError("OTP must contain only numbers");
               }
@@ -70,15 +67,9 @@ export default function VerifyEmailPage() {
             className="bg-[#222] border-[#333] text-white placeholder-gray-500"
           />
 
-          {error && (
-            <div className="text-red-400 text-sm text-center">{error}</div>
-          )}
+          {error && <div className="text-red-400 text-sm text-center">{error}</div>}
 
-          <Button
-            onClick={handleVerify}
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] hover:from-[#1D4ED8] hover:to-[#2563EB] hover:shadow-[0_5px_30px_-5px_rgba(37,99,235,0.3)] transition-all"
-          >
+          <Button onClick={handleVerify} disabled={loading} className="w-full bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] hover:from-[#1D4ED8] hover:to-[#2563EB] hover:shadow-[0_5px_30px_-5px_rgba(37,99,235,0.3)] transition-all">
             {loading ? (
               <div className="flex items-center gap-2">
                 <Spinner className="h-5 w-5" />
@@ -91,5 +82,13 @@ export default function VerifyEmailPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense>
+      <VerifyEmailInner />
+    </Suspense>
   );
 }

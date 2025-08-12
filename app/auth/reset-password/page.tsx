@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,21 +22,14 @@ const resetPasswordSchema = z
 
 type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
-export default function ResetPasswordPage({
-  params,
-}: {
-  params: { token: string };
-}) {
+function ResetPasswordInner() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
- 
-//   const token = decodeURIComponent(params.token);
 
-const searchParams = useSearchParams();
-
-const token = searchParams.get("token");
+  const searchParams = useSearchParams();
+  const token = searchParams?.get("token") || "";
 
   if (!token) {
     return (
@@ -48,10 +41,7 @@ const token = searchParams.get("token");
           <p className="text-center text-gray-400 mb-6">
             The password reset link is invalid or has expired.
           </p>
-          <Button
-            className="w-full"
-            onClick={() => router.push("/auth/forgot-password")}
-          >
+          <Button className="w-full" onClick={() => router.push("/auth/forgot-password")}>
             Request a new password link
           </Button>
         </div>
@@ -59,11 +49,7 @@ const token = searchParams.get("token");
     );
   }
 
-  const {
-    handleSubmit,
-    register,
-    formState: { errors },
-  } = useForm<ResetPasswordFormData>({
+  const { handleSubmit, register, formState: { errors } } = useForm<ResetPasswordFormData>({
     resolver: zodResolver(resetPasswordSchema),
     mode: "onChange",
   });
@@ -80,13 +66,10 @@ const token = searchParams.get("token");
       setIsSubmitting(true);
 
       try {
-        console.log("___TOKEN___",token)
         const res = await fetch(`/api/auth/reset-password/${token}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            password: data.password,
-          }),
+          body: JSON.stringify({ password: data.password }),
         });
 
         const result = await res.json();
@@ -114,33 +97,20 @@ const token = searchParams.get("token");
         </h1>
 
         {success && (
-          <div
-            role="alert"
-            className="bg-green-500/20 text-green-400 p-3 rounded-md mb-6 text-center"
-          >
+          <div role="alert" className="bg-green-500/20 text-green-400 p-3 rounded-md mb-6 text-center">
             Password reset successfully! Redirecting to login...
           </div>
         )}
 
         {error && (
-          <div
-            role="alert"
-            className="bg-red-500/20 text-red-400 p-3 rounded-md mb-6 text-center"
-          >
+          <div role="alert" className="bg-red-500/20 text-red-400 p-3 rounded-md mb-6 text-center">
             {error}
           </div>
         )}
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="space-y-6"
-          noValidate
-        >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
           <div className="space-y-2">
-            <label
-              htmlFor="password"
-              className="text-sm font-medium text-gray-300"
-            >
+            <label htmlFor="password" className="text-sm font-medium text-gray-300">
               New Password
             </label>
             <Input
@@ -151,18 +121,11 @@ const token = searchParams.get("token");
               className="bg-[#222] border-[#333] text-white placeholder-gray-500 focus-visible:ring-2 focus-visible:ring-[#2563EB]"
               {...register("password")}
             />
-            {errors.password && (
-              <span className="text-red-400 text-sm">
-                {errors.password.message}
-              </span>
-            )}
+            {errors.password && <span className="text-red-400 text-sm">{errors.password.message}</span>}
           </div>
 
           <div className="space-y-2">
-            <label
-              htmlFor="confirmPassword"
-              className="text-sm font-medium text-gray-300"
-            >
+            <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-300">
               Confirm Password
             </label>
             <Input
@@ -173,18 +136,10 @@ const token = searchParams.get("token");
               className="bg-[#222] border-[#333] text-white placeholder-gray-500 focus-visible:ring-2 focus-visible:ring-[#2563EB]"
               {...register("confirmPassword")}
             />
-            {errors.confirmPassword && (
-              <span className="text-red-400 text-sm">
-                {errors.confirmPassword.message}
-              </span>
-            )}
+            {errors.confirmPassword && <span className="text-red-400 text-sm">{errors.confirmPassword.message}</span>}
           </div>
 
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full bg-gradient-to-r from-[#2563EB] to-[#1D4ed8] hover:from-[#1D4ED8] hover:to-[#2563EB] hover:shadow-[0_5px_30px_-5px_rgba(37,99,235,0.3)] transition-all"
-          >
+          <Button type="submit" disabled={isSubmitting} className="w-full bg-gradient-to-r from-[#2563EB] to-[#1D4ed8] hover:from-[#1D4ED8] hover:to-[#2563EB] hover:shadow-[0_5px_30px_-5px_rgba(37,99,235,0.3)] transition-all">
             {isSubmitting ? (
               <div className="flex items-center gap-2">
                 <Spinner className="h-5 w-5" />
@@ -207,5 +162,13 @@ const token = searchParams.get("token");
         </form>
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense>
+      <ResetPasswordInner />
+    </Suspense>
   );
 }
