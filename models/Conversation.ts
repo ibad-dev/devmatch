@@ -30,7 +30,8 @@ const ConversationSchema = new Schema<IConversation>(
 
 // Ensure no duplicate 1:1 conversations
 ConversationSchema.index(
-  { participants: 1, isGroup: 1 },
+  { participants: 1, isGroup: 1,lastMessageAt: -1  },
+  
   {
     unique: true,
     partialFilterExpression: { isGroup: false },
