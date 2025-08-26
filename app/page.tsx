@@ -21,50 +21,90 @@ export default function Home() {
         />
         <Button
           onClick={() => router.push("/auth/register")}
-          className="hidden lg:block text-2xl font-semibold"
+          className="hidden lg:block text-base font-medium text-white rounded-full border border-white/20 bg-transparent hover:bg-white/5 px-5 py-2 transition-colors hover:ring-2 hover:text-white hover:ring-white/20"
           variant="outline"
           size="lg"
         >
-          Get Started
+         Sign In
         </Button>
       </nav>
 
       {/* Hero Section */}
       <main className="px-5">
-        <section className="flex flex-col lg:flex-row items-center justify-between gap-6 text-white  p-3 ">
+        <section className="relative flex flex-col lg:flex-row items-center justify-between gap-8 text-white p-3">
           {/* Hero Text */}
-          <div className="max-w-2xl lg:p-4 ">
-            <h1 className="text-2xl lg:text-6xl font-semibold tracking-tighter   text-transparent bg-clip-text bg-gradient-to-r from-[#FF0077] to-[#FFA500] leading-tight">
-              Welcome To devmatch
+          <div className="max-w-2xl lg:p-4 space-y-6">
+            <span className="inline-flex items-center rounded-full border border-white/15 px-3 py-1 text-xs font-medium text-gray-300">
+              Build together, faster
+            </span>
+            <h1 className="text-3xl lg:text-6xl font-semibold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-[#FF0077] to-[#FFA500] leading-tight">
+              Connect with developers. Collaborate on projects. Ship great products.
             </h1>
-            <h2 className="mt-4 text-xl lg:text-4xl font-semibold">
-              Connect. Collaborate. Code.
-            </h2>
-            <p className="mt-6 text-xl lg:text-2xl font-light">
-              An AI-powered networking platform built exclusively for developers
-              — showcase your work, grow your community, and build meaningful
-              collaborations.
+            <p className="text-lg lg:text-2xl font-light text-gray-300">
+              DevMatch helps you find collaborators, spin up conversations, and manage project work — all in one place.
             </p>
-            {/* Visible on large screens */}
-            <Button
-              onClick={() => router.push("/auth/register")}
-              className="text-lg mt-7 font-semibold bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] text-white py-3 px-6 rounded-md hover:scale-105 hover:from-[#1D4ED8] hover:to-[#2563EB] hover:shadow-lg hover:shadow-[#2563EB]/50 transition-all duration-300"
-              size="lg"
-            >
-              Connect with Devs
-            </Button>
+            <div className="flex flex-wrap gap-3 pt-1">
+              <Button
+                onClick={() => router.push("/auth/register")}
+                className="text-lg font-semibold bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] text-white py-3 px-6 rounded-md hover:scale-105 hover:from-[#1D4ED8] hover:to-[#2563EB] hover:shadow-lg hover:shadow-[#2563EB]/50 transition-all duration-300"
+                size="lg"
+              >
+                Get started
+              </Button>
+             
+            </div>
+            <div className="flex items-center gap-4 pt-2 text-sm text-gray-300">
+              
+              <span>Join a growing community of builders</span>
+              <span className="hidden md:inline-block h-4 w-px bg-white/20" />
+              <ul className="hidden md:flex items-center gap-4">
+                <li className="inline-flex items-center gap-1.5">
+                  <span>👩‍💻</span>
+                  <span>2k+ developers</span>
+                </li>
+                <li className="inline-flex items-center gap-1.5">
+                  <span>🚀</span>
+                  <span>1k+ projects</span>
+                </li>
+                <li className="inline-flex items-center gap-1.5">
+                  <span>⚡</span>
+                  <span>Realtime chat</span>
+                </li>
+              </ul>
+            </div>
           </div>
 
           {/* Hero Image */}
-          <div className="lg:p-4 ">
+          <div className="lg:p-4">
             <Image
-              src="/images/heroSectionImage.jpg"
-              alt="Developers collaborating at DevMatch"
-              width={490}
-              height={490}
+              src="/images/main.jpg"
+              alt="DevMatch preview"
+              width={520}
+              height={390}
               priority
-              className="w-auto h-auto rounded-md"
+              className="w-auto h-auto hidden lg:block rounded-md object-contain"
             />
+          </div>
+        </section>
+
+        {/* Features Grid */}
+        <section className="text-white py-8 px-4">
+          <div className="max-w-7xl mx-auto grid gap-6 md:grid-cols-3">
+            <div className="rounded-lg border border-white/10 bg-[#161616] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] transition-colors hover:border-white/20">
+              <div className="mb-3 inline-flex size-9 items-center justify-center rounded-md bg-white/10 text-white">💬</div>
+              <h3 className="text-lg font-semibold">Real-time chat</h3>
+              <p className="mt-1 text-sm text-gray-300">Stay in sync with conversations, read receipts, and message threads.</p>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-[#161616] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] transition-colors hover:border-white/20">
+              <div className="mb-3 inline-flex size-9 items-center justify-center rounded-md bg-white/10 text-white">👥</div>
+              <h3 className="text-lg font-semibold">Find collaborators</h3>
+              <p className="mt-1 text-sm text-gray-300">Discover developers by skills and interests, then send or accept requests.</p>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-[#161616] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] transition-colors hover:border-white/20">
+              <div className="mb-3 inline-flex size-9 items-center justify-center rounded-md bg-white/10 text-white">📦</div>
+              <h3 className="text-lg font-semibold">Manage projects</h3>
+              <p className="mt-1 text-sm text-gray-300">Create, update, and track projects so everyone knows what’s next.</p>
+            </div>
           </div>
         </section>
         <section className=" text-white py-5 px-4">
@@ -152,73 +192,46 @@ export default function Home() {
         </section>
         {/* footer */}
 
-        <footer className="bg-[#111111] text-white py-8 mt-16">
-          <div className="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-center px-5">
-            {/* Logo Section */}
-            <div className="mb-6 lg:mb-0 ">
-              <Image
-                src="/images/devmatch-bg-none.png" // Replace with your logo path
-                alt="DevMatch Logo"
-                width={120}
-                height={120}
-                className="w-auto h-auto "
-              />
-            </div>
-
-            {/* Minimal Links Section */}
-            <div className="flex gap-8 mb-6 lg:mb-0 text-lg">
-              <Link
-                href="/about"
-                className="text-gray-300 hover:text-gray-400 transition duration-300"
-              >
-                About
-              </Link>
-              <Link
-                href="/contact"
-                className="text-gray-300 hover:text-gray-400 transition duration-300"
-              >
-                Contact
-              </Link>
-            </div>
-
-            {/* Social Media Icons */}
-            <div className="flex gap-6">
-              <a
-                href="https://twitter.com"
-                target="_blank"
-                aria-label="Twitter"
-                rel="noopener noreferrer"
-              >
+        <footer className="mt-16 border-t border-white/10">
+          <div className="max-w-7xl mx-auto px-5 py-10 text-sm text-gray-300">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-3">
                 <Image
-                  src="/logos/twitter_logo.svg" // Replace with your actual image path
-                  alt="Developers discussing a project"
-                  width={600}
-                  height={400}
-                  className="w-6 h-6 text-gray-300 hover:text-gray-400 transition duration-300 rounded-xl"
-                  priority
+                  src="/images/devmatch-bg-none.png"
+                  alt="DevMatch Logo"
+                  width={112}
+                  height={32}
+                  quality={100}
+                  sizes="112px"
+                  className="h-8 w-auto"
                 />
-              </a>
-              <a
-                href="https://github.com"
-                target="_blank"
-                aria-label="GitHub"
-                rel="noopener noreferrer"
-              >
-                <Image
-                  src="/logos/github_logo.svg" // Replace with your actual image path
-                  alt="Developers discussing a project"
-                  width={600}
-                  height={400}
-                  className="w-6 h-6 text-gray-300 hover:text-gray-400 transition duration-300 rounded-xl"
-                  priority
-                />
-              </a>
-            </div>
-          </div>
+                
+              </div>
 
-          {/* Copyright Section */}
-          <div className="text-center mt-8 text-gray-400 text-sm">
-            &copy; {new Date().getFullYear()} DevMatch. All rights reserved.
+              <nav className="flex items-center gap-6">
+                <Link href="/about" className="hover:text-white transition-colors">About</Link>
+                <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
+                <Link href="/projects" className="hover:text-white transition-colors">Projects</Link>
+              </nav>
+
+              <div className="flex items-center gap-4">
+                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter" className="opacity-80 hover:opacity-100 transition-opacity">
+                  <Image src="/logos/twitter_logo.svg" alt="Twitter" width={20} height={20} className="h-5 w-5" />
+                </a>
+                <a href="https://github.com" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="opacity-80 hover:opacity-100 transition-opacity">
+                  <Image src="/logos/github_logo.svg" alt="GitHub" width={20} height={20} className="h-5 w-5" />
+                </a>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-col md:flex-row items-center justify-between gap-4">
+              <p className="text-xs text-gray-500">&copy; {new Date().getFullYear()} DevMatch. All rights reserved.</p>
+              <div className="flex items-center gap-4 text-xs text-gray-500">
+                <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
+                <span className="h-3 w-px bg-white/10" />
+                <Link href="#" className="hover:text-white transition-colors">Terms</Link>
+              </div>
+            </div>
           </div>
         </footer>
       </main>
