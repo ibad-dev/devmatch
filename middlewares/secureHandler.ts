@@ -18,16 +18,21 @@
           );
         }
 
-        // Sanitize body if it's JSON
-        if (req.headers.get("content-type")?.includes("application/json")) {
-          const rawBody = await req.json();
-          const cleanBody = deepSanitize(rawBody);
-          // recreate the request with sanitized body
-          req = new NextRequest(req.url, {
-            method: req.method,
-            headers: req.headers,
-            body: JSON.stringify(cleanBody),
-          });
+        // Only sanitize body for POST/PUT/PATCH requests with JSON content
+        if (req.method !== "GET" && req.headers.get("content-type")?.includes("application/json")) {
+          try {
+            const rawBody = await req.json();
+            const cleanBody = deepSanitize(rawBody);
+            // recreate the request with sanitized body
+            req = new NextRequest(req.url, {
+              method: req.method,
+              headers: req.headers,
+              body: JSON.stringify(cleanBody),
+            });
+          } catch (parseError) {
+            // If JSON parsing fails, continue without sanitization
+            console.warn("Failed to parse JSON body:", parseError);
+          }
         }
 
         return await handler(req);

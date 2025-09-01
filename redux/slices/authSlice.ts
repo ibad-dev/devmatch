@@ -5,6 +5,23 @@ interface User {
   name: string;
   email: string;
   profileImage?: string;
+  username?: string;
+  bio?: string;
+  skills?: string[];
+  location?: string;
+  isVerified?: boolean;
+  socials?: {
+    github?: string;
+    linkedin?: string;
+    twitter?: string;
+    portfolio?: string;
+  };
+  projects?: string[]; // Array of project IDs
+  connections?: string[]; // Array of user IDs
+  profileCompleted?: boolean;
+  lastActive?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 interface AuthState {
@@ -16,7 +33,7 @@ interface AuthState {
 const initialState: AuthState = {
   user: null,
   isAuthenticated: false,
-  loading: true, // true until we check session
+  loading: true,
 };
 
 const authSlice = createSlice({

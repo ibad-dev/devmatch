@@ -32,7 +32,8 @@ function Profile() {
   if (!isAuthenticated) {
     return null;
   }
-console.log("USER:=====>",user);
+  if(user){
+console.log("USER:=====>",user);}
   // User is authenticated, show profile content
   return (
     <div className="container mx-auto px-4 py-8">

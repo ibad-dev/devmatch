@@ -17,6 +17,7 @@ export const GET = secureHandler(
           { status: 401 }
         );
       }
+      
       const user = await User.findOne({ email: session.user.email });
       if (!user) {
         return NextResponse.json(
@@ -24,15 +25,28 @@ export const GET = secureHandler(
           { status: 404 }
         );
       }
+
+      // Convert Mongoose document to plain object and handle ObjectIds
+      const userData = user.toObject();
+      
+      // Convert ObjectIds to strings for arrays
+      if (userData.projects) {
+        userData.projects = userData.projects.map((id: any) => id.toString());
+      }
+      if (userData.connections) {
+        userData.connections = userData.connections.map((id: any) => id.toString());
+      }
+   
       return NextResponse.json(
         {
           success: true,
           message: "Current User Data Retrieved Successfully",
-          data: user,
+          data: userData,
         },
         { status: 200 }
       );
     } catch (error: unknown) {
+      console.error("Error in current-user-details:", error);
       return NextResponse.json(
         { success: false, message: "Internal server error" },
         { status: 500 }

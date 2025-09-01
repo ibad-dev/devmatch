@@ -10,17 +10,15 @@ export default function useAuthSync() {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
- 
     if (status === "loading") {
       dispatch(setLoading(true));
-      return; // wait until auth status resolves
+      return;
     }
 
-    // auth resolved
     dispatch(setLoading(false));
 
     if (status === "authenticated" && session?.user) {
-    
+      // First set basic user data from session
       const user = session.user;
       dispatch(
         setUser({
@@ -30,8 +28,53 @@ export default function useAuthSync() {
           profileImage: user.image ?? undefined,
         })
       );
+
+      // Then fetch complete user data from database
+      fetchCompleteUserData(user.email ?? "");
     } else {
       dispatch(clearUser());
     }
   }, [status, session, dispatch]);
+
+  const fetchCompleteUserData = async (email: string) => {
+    try {
+      const response = await fetch(`/api/profile/current-user-details`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const userData = result.data;
+        
+        // Update Redux with complete user data including all fields
+        dispatch(
+          setUser({
+            id: userData._id || userData.id,
+            name: userData.name,
+            email: userData.email,
+            profileImage: userData.profileImage,
+            username: userData.username,
+            bio: userData.bio,
+            skills: userData.skills,
+            location: userData.location,
+            isVerified: userData.isVerified,
+       
+            socials: userData.socials,
+            projects: userData.projects?.map((p: any) => p.toString()) || [],
+            connections: userData.connections?.map((c: any) => c.toString()) || [],
+           
+            profileCompleted: userData.profileCompleted,
+            lastActive: userData.lastActive,
+            createdAt: userData.createdAt,
+            updatedAt: userData.updatedAt,
+          })
+        );
+      }
+    } catch (error) {
+      console.error('Error fetching complete user data:', error);
+    }
+  };
 }
