@@ -91,7 +91,7 @@ export const authOptions: NextAuthOptions = {
         return true;
       } catch (error) {
         console.error("Error in signIn callback:", error);
-        return false; // Reject sign-in on error
+        return false; 
       }
     },
     async jwt({ token, user }) {

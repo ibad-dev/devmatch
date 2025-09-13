@@ -25,6 +25,7 @@ const FriendRequestSchema = new Schema({
 
 }   ,{timestamps: true}); 
 FriendRequestSchema.index({ sender: 1, receiver: 1 }, { unique: true });
+
 const FriendRequest = models.FriendRequest || model<FriendRequest>("FriendRequest", FriendRequestSchema);
 
 export default FriendRequest;

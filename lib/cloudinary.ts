@@ -1,13 +1,12 @@
 import { v2 as cloudinary } from "cloudinary";
 
-// ✅ Configure Cloudinary with your env vars
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
   api_key: process.env.CLOUDINARY_API_KEY!,
   api_secret: process.env.CLOUDINARY_API_SECRET!,
 });
 
-// ✅ Upload function
+
 export async function uploadToCloudinary(buffer: Buffer, folder: string) {
   return new Promise((resolve, reject) => {
     cloudinary.uploader
@@ -25,7 +24,6 @@ export async function uploadToCloudinary(buffer: Buffer, folder: string) {
   });
 }
 
-// ✅ Delete function with proper resource type handling
 export async function deleteFromCloudinary(
   publicId: string,
   resourceType: "image" | "video" | "raw" = "image"
@@ -52,6 +50,6 @@ export async function deleteFromCloudinary(
       stack: error instanceof Error ? error.stack : undefined,
       errorObject: error,
     });
-    throw error; // Re-throw the error after logging
+    throw error; 
   }
 }

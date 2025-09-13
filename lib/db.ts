@@ -7,7 +7,7 @@ if (!MONGODB_URI) {
   throw new Error("Please define the MONGODB_URI environment variable");
 }
 
-// Use "cached" instead of "catched"
+
 let cached = global.mongoose;
 
 if (!cached) {
@@ -21,7 +21,7 @@ export async function dbConnect() {
 
   if (!cached.promise) {
     const options = {
-      bufferCommands: false, // Better for serverless
+      bufferCommands: false,
       maxPoolSize: 10,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,

@@ -6,7 +6,7 @@ export interface IMessage extends Document {
   content: string;
   attachments?: { url: string; type: string; name?: string; size?: number }[];
   readBy: mongoose.Types.ObjectId[];
-  status: "sent" | "delivered" | "read"; // Add status field
+  status: "sent" | "delivered" | "read"; 
 }
 
 const MessageSchema = new Schema<IMessage>(
@@ -48,7 +48,7 @@ const MessageSchema = new Schema<IMessage>(
   { timestamps: true }
 );
 
-// Add index for pagination
+
 MessageSchema.index({ conversation: 1, createdAt: -1 });
 
 const Message = models.Message || model<IMessage>("Message", MessageSchema);

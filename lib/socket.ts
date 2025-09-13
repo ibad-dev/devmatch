@@ -13,9 +13,9 @@ export type NextApiResponseWithSocket = NextApiResponse & {
 
 let ioInstance: IOServer | null = null;
 
-/**
- * Get or create a singleton instance of the Socket.IO server.
- */
+
+
+// Get or create a singleton instance of the Socket.IO server.
 export function getOrCreateIO(server: NetServer): IOServer {
   if (ioInstance) return ioInstance;
 
@@ -31,21 +31,19 @@ export function getOrCreateIO(server: NetServer): IOServer {
   return ioInstance;
 }
 
-/**
- * Get the existing Socket.IO instance.
- */
+
+// Get the existing Socket.IO instance.
 export function getIO(): IOServer | null {
   return ioInstance;
 }
 
-/**
- * Set up Socket.IO event handlers.
- */
+
+// Set up Socket.IO event handlers.
 export function setupSocketIO(io: IOServer): void {
   io.on("connection", (socket: Socket) => {
     console.log("User connected:", socket.id);
 
-    // Join a conversation room
+      // Join a conversation room
     socket.on("joinConversation", (conversationId: string) => {
       if (!conversationId) {
         console.error("Invalid conversationId:", conversationId);
@@ -77,7 +75,7 @@ export function setupSocketIO(io: IOServer): void {
     // Handle user disconnection
     socket.on("disconnect", () => {
       console.log("User disconnected:", socket.id);
-      // Optionally, remove the user from conversation rooms
+    
     });
   });
 }

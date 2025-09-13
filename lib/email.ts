@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import { env } from "@/config/env";
 
-// Create reusable transporter object using the default SMTP transport
+
 const transporter = nodemailer.createTransport({
   host: env.SMTP_HOST,
   port: 587,
@@ -10,16 +10,16 @@ const transporter = nodemailer.createTransport({
     user: env.SMTP_USER,
     pass: env.SMTP_PASSWORD,
   },
-  // Connection timeout in ms
+  
   connectionTimeout: 10000,
-  // Socket timeout in ms
+ 
   socketTimeout: 10000,
   tls: {
     rejectUnauthorized: false,
   },
 });
 
-// Verify transporter connection configuration
+
 transporter.verify((error) => {
   if (error) {
     console.error("Error verifying SMTP connection:", error);
@@ -46,7 +46,7 @@ export const sendEmail = async ({
       from: `"DevMatch" <${env.SENDER_EMAIL}>`,
       to,
       subject,
-      text: text || html.replace(/<[^>]+>/g, ""), // Fallback text version
+      text: text || html.replace(/<[^>]+>/g, ""), 
       html,
     });
   } catch (error) {

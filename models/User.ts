@@ -14,8 +14,8 @@ export interface IUser extends Document {
   isVerified: boolean;
   verificationOTP?: string;
   verificationExpiry?: Date;
-  resetToken?: string; // New field for password reset token
-  resetTokenExpiry?: Date; // New field for password reset token expiration
+  resetToken?: string;
+  resetTokenExpiry?: Date; 
   role?: {
     type: string;
     enum: ["user", "admin"];
@@ -79,7 +79,7 @@ const UserSchema = new Schema<IUser>(
     profileCompleted: { type: Boolean, default: false },
     lastActive: { type: Date, default: Date.now },
 
-    // New fields for password reset
+    
     resetToken: { type: String },
     resetTokenExpiry: { type: Date },
     role: {
@@ -89,7 +89,7 @@ const UserSchema = new Schema<IUser>(
     },
   },
   {
-    timestamps: true, // auto adds createdAt and updatedAt
+    timestamps: true,
   }
 );
 
@@ -99,8 +99,6 @@ UserSchema.pre("save", async function (next) {
   }
   next();
 });
-
-// compare password from db to user entered password
 UserSchema.methods.comparePassword = async function (
   userPassword: string
 ): Promise<boolean> {
@@ -108,7 +106,7 @@ UserSchema.methods.comparePassword = async function (
   return await bcrypt.compare(userPassword, this.password);
 };
 
-// Add these new methods
+
 UserSchema.methods.generateVerificationOTP = function (): string {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   this.verificationOTP = otp;
@@ -126,7 +124,7 @@ UserSchema.methods.verifyOTP = function (otp: string): boolean {
   return false;
 };
 
-// Methods for password reset
+
 UserSchema.methods.generateResetToken = function (): string {
   const resetToken = crypto.randomBytes(32).toString("hex");
 
@@ -135,7 +133,7 @@ UserSchema.methods.generateResetToken = function (): string {
     .update(resetToken)
     .digest("hex");
 
-  this.resetTokenExpiry = new Date(Date.now() + 1 * 60 * 60 * 1000);
+  this.resetTokenExpiry = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hour
   return resetToken;
 };
 
@@ -146,7 +144,6 @@ UserSchema.methods.validateResetToken = function (token: string): boolean {
 };
 
 
-// Add a method to clear reset token after use
 UserSchema.methods.clearResetToken = function (): void {
   this.resetToken = undefined;
   this.resetTokenExpiry = undefined;
