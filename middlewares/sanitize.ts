@@ -1,4 +1,4 @@
-// lib/security/sanitize.ts
+
 type Sanitizable =
   | string
   | number

@@ -1,6 +1,6 @@
 type RateLimitOptions = {
-    windowMs: number; // e.g., 60_000 for 1 minute
-    maxRequests: number; // e.g., 10
+    windowMs: number; 
+    maxRequests: number; 
   };
   
   type ClientRecord = {
@@ -16,7 +16,7 @@ type RateLimitOptions = {
       const client = clients.get(ip);
   
       if (!client || currentTime > client.expiresAt) {
-        // New client or expired window
+
         clients.set(ip, {
           count: 1,
           expiresAt: currentTime + windowMs,
@@ -33,4 +33,12 @@ type RateLimitOptions = {
       return { allowed: false, retryAfter };
     };
   }
-  
+  // clean up expired entries every minute to save memory
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of clients) {
+    if (record.expiresAt < now) {
+      clients.delete(ip);
+    }
+  }
+}, 60_000);
