@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     await dbConnect()
     const { name, email, password } = await req.json();
 
-    // Check if user already exists
+   
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return NextResponse.json(

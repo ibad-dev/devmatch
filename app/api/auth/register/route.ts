@@ -27,10 +27,9 @@ export async function POST(request: NextRequest) {
     await User.create({
       name,
       email,
-      password, // Password will be hashed by the User model's pre-save hook
+      password, 
     });
 
-    // Return success with redirect suggestion (handled client-side)
     return NextResponse.json(
       { message: "User registered successfully" },
       { status: 201 }

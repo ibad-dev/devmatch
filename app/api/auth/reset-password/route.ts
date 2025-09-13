@@ -20,16 +20,13 @@
       const resetToken = user.generateResetToken();
       await user.save();
 
-      // Use a proper domain in production
       const baseUrl =
         process.env.NODE_ENV === "production"
-          ? "https://yourdomain.com" // Replace with your production domain
+          ? "https://yourdomain.com" //later we will add the production domain
           : "http://localhost:3000";
 
-      // Use query parameter instead of path parameter
       const resetUrl = `${baseUrl}/auth/reset-password?token=${encodeURIComponent(resetToken)}`;
 
-      // Verify the URL structure
       if (!resetUrl.includes("token=")) {
         throw new Error("Invalid reset URL structure");
       }
