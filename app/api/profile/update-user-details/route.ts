@@ -9,14 +9,18 @@ import { z } from "zod";
 
 // Define schema for profile update with strict validation
 const profileSchema = z.object({
-  bio: z.string().min(10, "Bio must be at least 10 characters").max(300, "Bio cannot exceed 300 characters").optional(),
+  bio: z
+    .string()
+    .min(10, "Bio must be at least 10 characters")
+    .max(300, "Bio cannot exceed 300 characters")
+    .optional(),
   skills: z.array(z.string().min(1, "Skills cannot be empty")).optional(),
-  location: z.string().max(100, "Location cannot exceed 100 characters").optional(),
+  location: z.string().max(50, "Location cannot exceed 50 characters").optional(),
   socials: z
     .object({
       github: z.string().url("Invalid GitHub URL").optional(),
       linkedin: z.string().url("Invalid LinkedIn URL").optional(),
-      X: z.string().url("Invalid X URL").optional(),
+      twitter: z.string().url("Invalid Twitter URL").optional(),
       portfolio: z.string().url("Invalid portfolio URL").optional(),
     })
     .optional(),
@@ -25,10 +29,8 @@ const profileSchema = z.object({
 export const PUT = secureHandler(
   async (req: NextRequest): Promise<NextResponse> => {
     try {
-      // Connect to MongoDB
       await dbConnect();
 
-      // Verify user authentication
       const session = await getServerSession(authOptions);
       if (!session || !session.user?.email) {
         return NextResponse.json(
@@ -37,7 +39,6 @@ export const PUT = secureHandler(
         );
       }
 
-      // Find user by email
       const user = await User.findOne({ email: session.user.email });
       if (!user) {
         return NextResponse.json(
@@ -46,17 +47,19 @@ export const PUT = secureHandler(
         );
       }
 
-      // Parse form data
       const formData = await req.formData();
       const body: Record<string, any> = Object.fromEntries(formData.entries());
       console.log("Form data received:", body);
 
-      // Convert skills string to array if provided
+      // Parse skills safely (support JSON array or comma-separated string)
       if (body.skills && typeof body.skills === "string") {
-        body.skills = body.skills.split(",").map((s: string) => s.trim());
+        try {
+          body.skills = JSON.parse(body.skills);
+        } catch {
+          body.skills = body.skills.split(",").map((s: string) => s.trim());
+        }
       }
 
-      // Validate input against schema
       const validation = profileSchema.safeParse(body);
       if (!validation.success) {
         return NextResponse.json(
@@ -72,13 +75,12 @@ export const PUT = secureHandler(
         );
       }
 
-      // Prepare update data
       const updateData: Record<string, any> = { ...validation.data };
 
       // Handle image upload
       let oldImagePublicId: string | null = null;
-      if (formData.has("files")) {
-        const files = formData.getAll("files");
+      if (formData.has("profileImage")) {
+        const files = formData.getAll("profileImage");
         if (files.length > 1) {
           return NextResponse.json(
             { success: false, message: "Only one profile image allowed" },
@@ -88,11 +90,13 @@ export const PUT = secureHandler(
 
         const file = files[0];
         if (file instanceof File) {
-          // Validate image type and size
           const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
           if (!allowedTypes.includes(file.type)) {
             return NextResponse.json(
-              { success: false, message: "Invalid image type. Allowed types: JPEG, PNG, WebP" },
+              {
+                success: false,
+                message: "Invalid image type. Allowed types: JPEG, PNG, WebP",
+              },
               { status: 400 }
             );
           }
@@ -103,65 +107,62 @@ export const PUT = secureHandler(
             );
           }
 
-          // Extract old image public ID if exists
-          if (user.profileImage) {
-            try {
-              const url = user.profileImage;
-              const parts = url.split("/upload/");
-              if (parts.length === 2) {
-                let path = parts[1];
-                // Remove version number (e.g., v1746367572) if present
-                const versionMatch = path.match(/^v\d+\//);
-                if (versionMatch) {
-                  path = path.slice(versionMatch[0].length); // Remove v123.../
-                }
-                const publicId = path.split(".")[0]; // Remove file extension
-                oldImagePublicId = publicId; // e.g., profiles/image123
-                console.log(`Extracted old public ID: ${oldImagePublicId}`);
-              } else {
-                console.warn(`Invalid Cloudinary URL format: ${url}`);
-              }
-            } catch (err) {
-              console.warn("Failed to extract public ID from URL:", err);
-            }
+          // Keep track of old image for later deletion
+          if (user.profileImagePublicId) {
+            oldImagePublicId = user.profileImagePublicId;
           }
 
-          // Upload new image to Cloudinary
+          // Upload new image
           const buffer = Buffer.from(await file.arrayBuffer());
           const uploaded = (await uploadToCloudinary(buffer, "profiles")) as {
             secure_url: string;
             public_id: string;
           };
           updateData.profileImage = uploaded.secure_url;
+          updateData.profileImagePublicId = uploaded.public_id;
           console.log(`Uploaded new image: ${uploaded.secure_url}`);
         }
       }
 
-      // Update user in database
+      // Strip empty fields
+      Object.keys(updateData).forEach((key) => {
+        if (
+          updateData[key] === "" ||
+          (Array.isArray(updateData[key]) && updateData[key].length === 0)
+        ) {
+          delete updateData[key];
+        }
+      });
+
+      // Update user in DB
       const updatedUser = await User.findByIdAndUpdate(
         user._id,
         { $set: updateData },
         { new: true }
-      );
+      ).lean();
 
-      // Delete old image from Cloudinary if replaced
+      if (!updatedUser) {
+        return NextResponse.json(
+          { success: false, message: "Failed to update user" },
+          { status: 500 }
+        );
+      }
+
+      // Delete old image only AFTER DB update succeeds
       if (oldImagePublicId && updateData.profileImage) {
         try {
           const deletionResult = await deleteFromCloudinary(oldImagePublicId, "image");
-          if (deletionResult.result === "ok") {
-            console.log(`Successfully deleted old image with public ID: ${oldImagePublicId}`);
+          if ((deletionResult as any).result === "ok") {
+            console.log(` Deleted old image: ${oldImagePublicId}`);
           } else {
-            console.warn(
-              `Failed to delete old image with public ID ${oldImagePublicId}. Result:`,
-              deletionResult
-            );
+            console.warn(`Failed to delete old image: ${oldImagePublicId}`);
           }
         } catch (err) {
           console.warn("Error deleting old image from Cloudinary:", err);
         }
       }
 
-      // Return success response
+    
       return NextResponse.json({
         success: true,
         message: "Profile updated successfully",
