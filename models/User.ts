@@ -6,13 +6,14 @@ export interface IUser extends Document {
   name: string;
   email: string;
   profileImage?: string;
+  profileImagePublicId?: string;
   password?: string;
   username?: string;
   bio?: string;
   skills?: string[];
   location?: string;
   isVerified: boolean;
-  verificationOTP?: string;
+  verificationOTP?: string; 
   verificationExpiry?: Date;
   resetToken?: string;
   resetTokenExpiry?: Date; 
@@ -51,10 +52,11 @@ const UserSchema = new Schema<IUser>(
     },
     password: { type: String , select:false},
     profileImage: { type: String },
+    profileImagePublicId: { type: String },
     isVerified: { type: Boolean, default: false },
     verificationOTP: { type: String },
     verificationExpiry: { type: Date },
-    username: {
+        username: {
       type: String,
       unique: true,
       sparse: true,
