@@ -10,14 +10,18 @@ export interface IProject extends Document {
   githubUrl?: string;
   liveUrl?: string;
   collabrators?: mongoose.Types.ObjectId[];
-  media?: {
-    videoUrl?: string;
-    images?: string[]; // URLs of uploaded images
+  media: {
+    video?: {
+      url: string;
+      publicId: string;
+    };
+    images: {
+      url: string;
+      publicId: string;
+    }[];
   };
-
   status?: "draft" | "published";
   likes?: number;
-
   createdAt: Date;
   updatedAt: Date;
 }
@@ -50,16 +54,20 @@ const ProjectSchema = new Schema<IProject>(
     liveUrl: { type: String },
     collabrators: [{ type: Schema.Types.ObjectId, ref: "User" }],
     media: {
-      videoUrl: { type: String },
-      images: [{ type: String }],
+      video: {
+        url: { type: String },
+        publicId: { type: String }
+      },
+      images: [{
+        url: { type: String },
+        publicId: { type: String }
+      }],
     },
-
     status: {
       type: String,
       enum: ["draft", "published"],
       default: "published",
     },
-
     likes: { type: Number, default: 0 },
   },
   {

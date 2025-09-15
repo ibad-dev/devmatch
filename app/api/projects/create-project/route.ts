@@ -8,7 +8,7 @@ import { z } from "zod";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { secureHandler } from "@/middlewares/secureHandler";
 
-// Zod schema for validation
+// Zod schema
 const projectSchema = z.object({
   title: z.string().min(3).max(100),
   description: z.string().min(10).max(2000),
@@ -20,118 +20,177 @@ const projectSchema = z.object({
   status: z.enum(["draft", "published"]).optional(),
   media: z
     .object({
-      videoUrl: z.string().url().optional(),
-      images: z.array(z.string()).optional(),
+      video: z
+        .object({
+          url: z.string().url(),
+          publicId: z.string(),
+        })
+        .optional(),
+      images: z
+        .array(
+          z.object({
+            url: z.string().url(),
+            publicId: z.string(),
+          })
+        )
+        .optional(),
     })
     .optional(),
 });
+
+// Constants
+const MAX_IMAGES = 10;
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
 
 export const POST = secureHandler(async (req: NextRequest) => {
   await dbConnect();
 
   try {
-    // Authentication
+    // Auth check
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
 
-    // Process form data
+    const user = await User.findOne({ email: session.user.email });
+    if (!user) {
+      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
+    }
+
+    
+    // Parse formData
     const formData = await req.formData();
+ 
     const body: Record<string, any> = Object.fromEntries(formData.entries());
-
-    // Convert string arrays
-    ["tags", "techStack", "images"].forEach((key) => {
-      if (body[key] && typeof body[key] === "string") {
-        body[key] = body[key].split(",");
+    
+// Parse JSON arrays from frontend only if it's a string
+["tags", "techStack"].forEach((key) => {
+  if (body[key]) {
+    if (typeof body[key] === "string") {
+      try {
+        body[key] = JSON.parse(body[key]); 
+      } catch {
+        body[key] = []; 
       }
-    });
+    }
+  
+  }
+});
 
-    // Validate input
-    const validation = projectSchema.safeParse(body);
-    if (!validation.success) {
+    // Base validation (without media)
+    const baseValidation = projectSchema.omit({ media: true }).safeParse(body);
+    if (!baseValidation.success) {
       return NextResponse.json(
         {
           success: false,
           message: "Invalid input",
-          errors: validation.error.errors,
+          errors: baseValidation.error.errors.map((err) => ({
+            path: err.path.join("."),
+            message: err.message,
+          })),
         },
         { status: 400 }
       );
     }
 
-    // Find user
-    const user = await User.findOne({ email: session.user.email });
-    if (!user) {
+    // Handle media uploads
+    const media: { images: { url: string; publicId: string }[]; video?: { url: string; publicId: string } } = {
+      images: [],
+    };
+
+    // Images
+    const imageFiles = formData.getAll("images");
+    if (imageFiles.length > 0) {
+      if (imageFiles.length > MAX_IMAGES) {
+        return NextResponse.json({ success: false, message: `Maximum ${MAX_IMAGES} images allowed` }, { status: 400 });
+      }
+
+      try {
+        const uploadPromises = imageFiles.map(async (file) => {
+          if (!(file instanceof File)) return null;
+
+          if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+            throw new Error(`Invalid image type: ${file.type}`);
+          }
+          if (file.size > MAX_IMAGE_SIZE) {
+            throw new Error(`Image size exceeds ${MAX_IMAGE_SIZE / (1024 * 1024)}MB`);
+          }
+
+          const buffer = Buffer.from(await file.arrayBuffer());
+          const { secure_url, public_id } = (await uploadToCloudinary(buffer, "projects/images")) as { secure_url: string; public_id: string };
+          return { url: secure_url, publicId: public_id };
+        });
+
+        media.images = (await Promise.all(uploadPromises)).filter(Boolean) as { url: string; publicId: string }[];
+      } catch (error) {
+        return NextResponse.json(
+          { success: false, message: error instanceof Error ? error.message : "Image upload failed" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Video
+    const videoFile = formData.get("video");
+    
+    if (videoFile instanceof File) {
+      if (!ALLOWED_VIDEO_TYPES.includes(videoFile.type)) {
+        return NextResponse.json({ success: false, message: `Invalid video type: ${videoFile.type}` }, { status: 400 });
+      }
+      if (videoFile.size > MAX_VIDEO_SIZE) {
+        return NextResponse.json({ success: false, message: `Video size exceeds ${MAX_VIDEO_SIZE / (1024 * 1024)}MB` }, { status: 400 });
+      }
+
+      try {
+        const buffer = Buffer.from(await videoFile.arrayBuffer());
+        const { secure_url, public_id } = (await uploadToCloudinary(buffer, "projects/videos")) as { secure_url: string; public_id: string };
+        media.video = { url: secure_url, publicId: public_id };
+      } catch {
+        return NextResponse.json({ success: false, message: "Video upload failed" }, { status: 400 });
+      }
+    }
+
+    // Final data
+    const finalData = {
+      ...baseValidation.data,
+      owner: user._id,
+      media: (media.images.length > 0 || media.video) ? media : undefined,
+    };
+
+    // Validate final structure (with media)
+    const finalValidation = projectSchema.safeParse(finalData);
+    if (!finalValidation.success) {
       return NextResponse.json(
-        { success: false, message: "User not found" },
-        { status: 404 }
+        {
+          success: false,
+          message: "Invalid media input",
+          errors: finalValidation.error.errors.map((err) => ({
+            path: err.path.join("."),
+            message: err.message,
+          })),
+        },
+        { status: 400 }
       );
     }
 
-    // Handle media uploads
-    const media: any = {};
-    const files = formData.getAll("files");
+    // Create project (use finalData to include required owner field)
+    const newProject = await Project.create(finalData);
 
-    if (files.length > 0) {
-      const uploadPromises = files.map(async (file) => {
-        if (file instanceof File) {
-          // Validate image
-          const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-          if (
-            !allowedTypes.includes(file.type) ||
-            file.size > 5 * 1024 * 1024
-          ) {
-            throw new Error(`Invalid image: ${file.type}, ${file.size} bytes`);
-          }
-
-          const arrayBuffer = await file.arrayBuffer();
-          const { secure_url } = (await uploadToCloudinary(
-            Buffer.from(arrayBuffer),
-            `project`
-          )) as { secure_url: string };
-          return secure_url;
-        }
-        return null;
-      });
-
-      media.images = (await Promise.all(uploadPromises)).filter(Boolean);
-    }
-
-    // Handle video upload
-    const videoFile = formData.get("video");
-    if (videoFile instanceof File) {
-      const videoArrayBuffer = await videoFile.arrayBuffer();
-      const { secure_url } = (await uploadToCloudinary(
-        Buffer.from(videoArrayBuffer),
-        `project/videos`
-      )) as { secure_url: string };
-      media.videoUrl = secure_url;
-    }
-
-    // Create project
-    const newProject = await Project.create({
-      ...validation.data,
-      owner: user._id,
-      media: Object.keys(media).length > 0 ? media : undefined,
-    });
-
-    // Link project to user
-    await User.findByIdAndUpdate(user._id, {
-      $push: { projects: newProject._id },
-    });
+    // Link to user
+    user.projects.push(newProject._id);
+    await user.save();
 
     return NextResponse.json(
-      { success: true, data: newProject },
+      { success: true, message: "Project created successfully", data: newProject },
       { status: 201 }
     );
   } catch (error) {
     console.error("Error creating project:", error);
     return NextResponse.json(
-      { success: false, message: "Internal Server Error" },
+      { success: false, message: error instanceof Error ? error.message : "Internal Server Error" },
       { status: 500 }
     );
   }
