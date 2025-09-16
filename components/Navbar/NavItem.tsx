@@ -21,7 +21,7 @@ export default function NavItem({ href, label, icon: Icon }: NavItemProps) {
       href={href}
       aria-current={isActive ? "page" : undefined}
       className={`flex flex-col items-center text-sm ${
-        isActive ? "text-primary font-semibold" : "text-gray-500"
+        isActive ? "text-shadow-gray-200 font-semibold" : "text-foreground"
       }`}
     >
       <Icon className="h-5 w-5" aria-hidden="true" />

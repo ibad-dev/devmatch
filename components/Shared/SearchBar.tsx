@@ -29,7 +29,7 @@ export default function SearchBar({
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder={placeholder}
-        className="px-3 py-1 rounded-md border bg-gray-100 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-primary/50"
+        className="px-3 py-1 rounded-md border border-gray-400 bg-background text-sm w-64 focus:outline-none focus:ring-2 focus:ring-primary/50"
       />
     </form>
   );

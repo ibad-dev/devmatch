@@ -18,7 +18,7 @@ export default function Navbar() {
   return (
     <>
       {/* Top Navbar for Mobile */}
-      <nav className="flex items-center justify-between border-b px-4 py-2 bg-white sticky top-0 z-50 md:hidden">
+      <nav className="flex items-center justify-between border-b px-4 py-2 bg-background sticky top-0 z-50 md:hidden">
         <div className="flex items-center gap-4">
           <NavItem href="/profile" icon={User} label="Profile" />
           <SearchBar />
@@ -26,7 +26,7 @@ export default function Navbar() {
       </nav>
 
       {/* Main Navbar for Desktop */}
-      <nav className="hidden md:flex items-center justify-around border-b px-4 py-2 bg-white sticky top-0 z-50">
+      <nav className="hidden md:flex items-center justify-around border-b px-4 py-2 bg-background sticky top-0 z-50">
         <div className="flex items-center gap-4">
           <Logo />
           <SearchBar />
@@ -40,7 +40,7 @@ export default function Navbar() {
       </nav>
 
       {/* Bottom Navbar for Mobile */}
-      <nav className="fixed bottom-0 left-0 right-0 flex justify-around border-t px-4 py-2 bg-white z-50 md:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 flex justify-around border-t px-4 py-2 bg-background z-50 md:hidden">
         {navItems
           .filter((item) => item.href !== "/profile")
           .map(({ href, icon, label }) => (

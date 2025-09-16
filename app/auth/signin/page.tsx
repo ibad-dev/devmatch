@@ -100,18 +100,8 @@ export default function SignInPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#111111] p-4">
       <div className="bg-[#1a1a1a] text-white p-6 sm:p-8 rounded-xl shadow-xl w-full max-w-lg">
-        {/* Logo and Header */}
-        <div className="flex justify-center mb-6">
-          <Image
-            src="/images/devmatch-bg-none.png"
-            alt="DevMatch Logo"
-            width={120}
-            height={40}
-            priority
-            className="h-10 w-auto"
-          />
-        </div>
-        <h1 className="text-3xl sm:text-4xl font-bold text-center mb-6 bg-gradient-to-r from-[#2563EB] to-[#7C3AED] bg-clip-text text-transparent">
+       
+        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-6 bg-gradient-to-r from-[#2563EB] to-[#7C3AED] bg-clip-text text-transparent">
           Sign In to DevMatch
         </h1>
 
