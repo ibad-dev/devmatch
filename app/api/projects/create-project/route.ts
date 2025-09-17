@@ -66,7 +66,25 @@ export const POST = secureHandler(async (req: NextRequest) => {
  
     const body: Record<string, any> = Object.fromEntries(formData.entries());
     
-// Parse JSON arrays from frontend only if it's a string
+
+// Get all images properly
+const imageFiles = formData.getAll("images");
+
+
+for (const [key, value] of formData.entries()) {
+  // Skip images for now as we handle them separately
+  if (key !== "images") {
+    body[key] = value;
+  }
+}
+
+// Convert string values to proper types
+if (body.isCollabrating) {
+  body.isCollabrating = body.isCollabrating === 'true';
+}
+
+
+// Parse JSON arrays from frontend
 ["tags", "techStack"].forEach((key) => {
   if (body[key]) {
     if (typeof body[key] === "string") {
@@ -76,10 +94,18 @@ export const POST = secureHandler(async (req: NextRequest) => {
         body[key] = []; 
       }
     }
-  
+  } else {
+    body[key] = [];
   }
 });
 
+// Handle empty URLs
+if (body.githubUrl === '') delete body.githubUrl;
+if (body.liveUrl === '') delete body.liveUrl;
+
+console.log("DATA: ", body);
+console.log("IMAGE FILES: ", imageFiles);
+console.log("DATA: ",body)
     // Base validation (without media)
     const baseValidation = projectSchema.omit({ media: true }).safeParse(body);
     if (!baseValidation.success) {
@@ -102,7 +128,6 @@ export const POST = secureHandler(async (req: NextRequest) => {
     };
 
     // Images
-    const imageFiles = formData.getAll("images");
     if (imageFiles.length > 0) {
       if (imageFiles.length > MAX_IMAGES) {
         return NextResponse.json({ success: false, message: `Maximum ${MAX_IMAGES} images allowed` }, { status: 400 });
