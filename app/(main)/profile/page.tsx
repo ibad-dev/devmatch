@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useAppSelector } from "../../../redux/hooks";
 import useAuthSync from "@/hooks/useAuthSync";
 import Image from "next/image";
@@ -8,20 +8,25 @@ import {
   Github,
   Linkedin,
   Twitter,
-  Globe,
   MapPin,
   Calendar,
   Edit,
+  ExternalLink,
+  Plus,
 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Skeleton
 } from "@/components/ui/skeleton";
-
+import axios from "axios"
+import { IProject } from "@/models/Project";
+import { string } from "zod";
 function Profile() {
+
   // Sync NextAuth with Redux
   useAuthSync();
 
@@ -29,13 +34,37 @@ function Profile() {
     (state) => state.auth
   );
   const router = useRouter();
+  
+  // fetching user projects details 
+  
+  const [projects, setProjects] = useState<IProject[]>([]);
+  const [Loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_CLIENT_URL}projects/get-all-projects`);
+        console.log("RES:",response)
+        setProjects(response.data.data);
+      } catch (err) {
+        setError('Failed to load projects');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       router.push("/auth/signin");
     }
   }, [isAuthenticated, loading, router]);
-
+console.log("PROJECT_DATA=====>>",projects)
+// console.log("USER_DATA=====>>",user)
   // Skeleton while loading
   if (loading) {
     return (
@@ -61,10 +90,66 @@ function Profile() {
   if (!isAuthenticated) {
     return null;
   }
+ 
+
+  //project component
+  
+const ProjectCard = ({ project }: { project: IProject}) => {
+  return (
+    <Card className="group hover:shadow-md transition-shadow">
+      <div className="aspect-video relative overflow-hidden rounded-t-lg">
+        <img src={project.media.images[0]?.url || "images/project.jpg"} alt={project.title} className="object-cover w-full h-full" />
+        <div className="absolute top-2 right-2">
+          <Badge variant={project.isCollabrating ? "default" : "secondary"}>{project.isCollabrating ? "Collabration" :"Showcase"}</Badge>
+        </div>
+      </div>
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between">
+          <CardTitle className="text-lg group-hover:text-primary transition-colors">{project.title}</CardTitle>
+          <Badge variant="outline" className="ml-2">
+            {project.isCollabrating ? "Active" :"Completed"}
+          </Badge>
+        </div>
+        <CardDescription className="text-sm">{project.description}</CardDescription>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="flex flex-wrap gap-1 mb-4">
+          {project?.techStack?.map((tech) => (
+            <Badge key={tech} variant="outline" className="text-xs">
+              {tech}
+            </Badge>
+          ))}
+        </div>
+        <div className="flex items-center justify-between">
+        
+          <div className="flex space-x-2">
+            <Button variant="ghost" size="sm" asChild>
+              <a href={project.githubUrl} target="_blank" rel="noopener noreferrer">
+                <Github className="h-4 w-4" />
+              </a>
+            </Button>
+            {project.liveUrl && (
+              <Button variant="ghost" size="sm" asChild>
+                <a href={project.liveUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+
+
+
 
   // Render profile
   return (
-    <div className="container mx-auto px-2 py-4">
+    <div className="container mx-auto px-2  py-4">
+      {/* Profile component */}
       <Card className="max-w-6xl mx-auto">
         <CardContent>
           {user && (
@@ -210,8 +295,62 @@ function Profile() {
           )}
         </CardContent>
       </Card>
+
+
+
+           {/* Projects Section */}
+        <Tabs defaultValue="all" className="w-full mt-5">
+          <div className="flex items-center justify-between mb-6">
+            <TabsList>
+              <TabsTrigger value="all">All Projects</TabsTrigger>
+              <TabsTrigger value="showcase">Showcase</TabsTrigger>
+              <TabsTrigger value="collaboration">Collaboration</TabsTrigger>
+            </TabsList>
+            {(
+              <Link href="/projects/new">
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Project
+                </Button>
+              </Link>
+            )}
+          </div>
+
+          <TabsContent value="all">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {projects.map((project) => (
+                <ProjectCard key={project._id} project={project} />
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="showcase">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {projects
+                .filter((p) => p.isCollabrating === false)
+                .map((project) => (
+                  <ProjectCard key={project._id} project={project} />
+                ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="collaboration">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {projects
+                .filter((p) => p.isCollabrating === true)
+                .map((project) => (
+                  <ProjectCard key={project._id} project={project} />
+                ))}
+            </div>
+          </TabsContent>
+        </Tabs>
+
+
     </div>
   );
 }
 
 export default Profile;
+
+
+
