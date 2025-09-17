@@ -9,6 +9,8 @@ import { z } from "zod";
 
 // Define schema for profile update with strict validation
 const profileSchema = z.object({
+  name: z.string().min(2, "Name must be at least 3 characters").max(50, "Name cannot exceed 30 characters").optional(),
+  username: z.string().min(3, "Username must be at least 3 characters").max(20, "Username cannot exceed 15 characters").optional(),
   bio: z
     .string()
     .min(10, "Bio must be at least 10 characters")
@@ -50,16 +52,47 @@ export const PUT = secureHandler(
       const formData = await req.formData();
       const body: Record<string, any> = Object.fromEntries(formData.entries());
       console.log("Form data received:", body);
-
-      // Parse skills safely (support JSON array or comma-separated string)
+      
+      // Parse skills safely
       if (body.skills && typeof body.skills === "string") {
         try {
           body.skills = JSON.parse(body.skills);
         } catch {
-          body.skills = body.skills.split(",").map((s: string) => s.trim());
+          throw Error("failed to parse the skills")
         }
       }
-
+// Parse socials 
+if (body.socials && typeof body.socials === "string") {
+  try {
+    const cleanedSocials = body.socials.replace(/'/g, '"'); 
+    const parsedSocials = JSON.parse(cleanedSocials);
+    
+    // Validate with your schema
+    const socialsSchema = z.object({
+      github: z.string().url("Invalid GitHub URL").optional(),
+      linkedin: z.string().url("Invalid LinkedIn URL").optional(),
+      twitter: z.string().url("Invalid Twitter URL").optional(),
+      portfolio: z.string().url("Invalid portfolio URL").optional(),
+    });
+    
+    const validatedSocials = socialsSchema.parse(parsedSocials);
+    
+    // Merge with existing socials, filtering out empty strings
+    body.socials = {
+      github: validatedSocials.github !== undefined ? validatedSocials.github : user.socials.github,
+      linkedin: validatedSocials.linkedin !== undefined ? validatedSocials.linkedin : user.socials.linkedin,
+      twitter: validatedSocials.twitter !== undefined ? validatedSocials.twitter : user.socials.twitter,
+      portfolio: validatedSocials.portfolio !== undefined ? validatedSocials.portfolio : user.socials.portfolio,
+    };
+    
+    console.log("Merged socials:", body.socials); 
+  } catch (err: any) {
+    console.error("Socials parse error:", err.message);
+    console.error("Raw socials that failed:", body.socials); 
+    return NextResponse.json({ message: "Failed to parse socials" });
+  }
+}
+console.log("DATA:",body)
       const validation = profileSchema.safeParse(body);
       if (!validation.success) {
         return NextResponse.json(
@@ -76,6 +109,7 @@ export const PUT = secureHandler(
       }
 
       const updateData: Record<string, any> = { ...validation.data };
+      console.log("UPDATED_DATA",updateData)
 
       // Handle image upload
       let oldImagePublicId: string | null = null;
@@ -181,3 +215,8 @@ export const PUT = secureHandler(
     }
   }
 );
+
+
+
+
+

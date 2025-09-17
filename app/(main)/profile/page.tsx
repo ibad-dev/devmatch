@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/skeleton";
 import axios from "axios"
 import { IProject } from "@/models/Project";
-import { string } from "zod";
 function Profile() {
 
   // Sync NextAuth with Redux
@@ -86,7 +85,6 @@ console.log("PROJECT_DATA=====>>",projects)
     );
   }
 
-  // If not authenticated, render nothing (redirects already)
   if (!isAuthenticated) {
     return null;
   }
@@ -158,13 +156,13 @@ const ProjectCard = ({ project }: { project: IProject}) => {
               <div className="flex flex-col md:flex-row items-center md:items-start md:space-x-6 mb-6">
                 <div className="flex flex-col items-center md:items-start gap-y-3">
                   <Image
-                    className="border-2 rounded-full"
+                    className="border-2 bg-cover rounded-full "
                     src={
                       user.profileImage
                         ? user.profileImage
                         : "/images/placeholder-user.jpg"
                     }
-                    width={94}
+                    width={114}
                     height={94}
                     alt={`${user.name || "User"}'s profile picture`}
                   />
@@ -229,7 +227,7 @@ const ProjectCard = ({ project }: { project: IProject}) => {
                   <div className="flex mt-4 space-x-4">
                     {user?.socials?.github && (
                       <a
-                        href={`https://github.com/${user.socials.github}`}
+                        href={`${user.socials.github}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-muted-foreground hover:text-foreground transition-colors"
@@ -239,7 +237,7 @@ const ProjectCard = ({ project }: { project: IProject}) => {
                     )}
                     {user?.socials?.linkedin && (
                       <a
-                        href={`https://linkedin.com/in/${user.socials.linkedin}`}
+                        href={`${user.socials.linkedin}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-muted-foreground hover:text-foreground transition-colors"
@@ -249,7 +247,7 @@ const ProjectCard = ({ project }: { project: IProject}) => {
                     )}
                     {user?.socials?.twitter && (
                       <a
-                        href={`https://twitter.com/${user.socials.twitter}`}
+                        href={`${user.socials.twitter}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-muted-foreground hover:text-foreground transition-colors"
